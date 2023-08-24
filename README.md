@@ -11,7 +11,7 @@
 
 - switch optionValueで選択肢ごとの挙動記載
 - `make install`でzip用toolのインストール
-- `make build`で作成したzipをlambdaにアップロード
+- `make build`で作成したzipをLambdaにアップロード
 - Lambda作成
 - Lambdaのランタイム設定からハンドラをdalに修正
     - ログに`no such file or directory`が出たときは恐らくこの設定漏れ
