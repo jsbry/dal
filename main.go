@@ -38,7 +38,7 @@ func HandleRequest(ctx context.Context, event map[string]interface{}) (Response,
 		Body:            "",
 	}
 
-	content, err := requestCheck(event)
+	content, err := paramCheck(event)
 	if err != nil {
 		r.StatusCode = http.StatusUnauthorized
 		r.Body = err.Error()
@@ -62,7 +62,7 @@ type CommandData struct {
 	Content string `json:"content"`
 }
 
-func requestCheck(event map[string]interface{}) (string, error) {
+func paramCheck(event map[string]interface{}) (string, error) {
 	pubKeyBytes, err := hex.DecodeString(os.Getenv("DISCORD_PUBKEY"))
 	if err != nil {
 		return "", errors.New("err pubkey")
