@@ -6,12 +6,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bwmarrin/discordgo"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
 )
 
 const (
@@ -38,7 +42,7 @@ func HandleRequest(ctx context.Context, event map[string]interface{}) (Response,
 		Body:            "",
 	}
 
-	content, err := paramCheck(event)
+	content, err := paramCheck(ctx, event)
 	if err != nil {
 		r.StatusCode = http.StatusUnauthorized
 		r.Body = err.Error()
@@ -62,7 +66,7 @@ type CommandData struct {
 	Content string `json:"content"`
 }
 
-func paramCheck(event map[string]interface{}) (string, error) {
+func paramCheck(ctx context.Context, event map[string]interface{}) (string, error) {
 	pubKeyBytes, err := hex.DecodeString(os.Getenv("DISCORD_PUBKEY"))
 	if err != nil {
 		return "", errors.New("err pubkey")
@@ -158,13 +162,41 @@ func paramCheck(event map[string]interface{}) (string, error) {
 		}
 
 		if optionName == "action" && int(optionType) == 3 {
+			ec2client, err := getEC2Client(ctx)
+			if err != nil {
+				return "", errors.New("err ec2client")
+			}
+
+			instanceID := os.Getenv("INSTANCE_ID")
 			switch optionValue {
 			case "start":
-				content = "server start"
+				result, err := ec2client.StartInstances(ctx, &ec2.StartInstancesInput{
+					InstanceIds: []string{instanceID},
+				})
+				if err != nil {
+					content = "server couldn't be started."
+				} else {
+					content = fmt.Sprintf("server started: %#v", result)
+				}
 			case "stop":
-				content = "server stop"
+				result, err := ec2client.StopInstances(ctx, &ec2.StopInstancesInput{
+					InstanceIds: []string{instanceID},
+				})
+				if err != nil {
+					content = "server couldn't be stoped."
+				} else {
+					content = fmt.Sprintf("server stoped: %#v", result)
+				}
 			case "test":
-				content = "server test"
+				result, err := ec2client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
+					InstanceIds: []string{instanceID},
+				})
+				if err != nil {
+					content = "server couldn't be stoped."
+				} else {
+					content = "server stoped."
+				}
+				content = fmt.Sprintf("server test: %#v", result)
 			}
 		}
 
@@ -181,4 +213,19 @@ func paramCheck(event map[string]interface{}) (string, error) {
 		content = string(cr)
 	}
 	return content, nil
+}
+
+func getEC2Client(ctx context.Context) (*ec2.Client, error) {
+	region := os.Getenv("REGION")
+
+	opts := []func(*config.LoadOptions) error{
+		config.WithRegion(region),
+	}
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+	ec2client := ec2.NewFromConfig(cfg)
+
+	return ec2client, nil
 }
