@@ -170,33 +170,32 @@ func paramCheck(ctx context.Context, event map[string]interface{}) (string, erro
 			instanceID := os.Getenv("INSTANCE_ID")
 			switch optionValue {
 			case "start":
-				result, err := ec2client.StartInstances(ctx, &ec2.StartInstancesInput{
+				_, err := ec2client.StartInstances(ctx, &ec2.StartInstancesInput{
 					InstanceIds: []string{instanceID},
 				})
 				if err != nil {
-					content = "server couldn't be started."
+					content = "Server couldn't be started."
 				} else {
-					content = fmt.Sprintf("server started: %#v", result)
+					content = "Server started: please waiting..."
 				}
 			case "stop":
-				result, err := ec2client.StopInstances(ctx, &ec2.StopInstancesInput{
+				_, err := ec2client.StopInstances(ctx, &ec2.StopInstancesInput{
 					InstanceIds: []string{instanceID},
 				})
 				if err != nil {
-					content = "server couldn't be stoped."
+					content = "Server couldn't be stoped."
 				} else {
-					content = fmt.Sprintf("server stoped: %#v", result)
+					content = "Server stoped"
 				}
 			case "test":
 				result, err := ec2client.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
 					InstanceIds: []string{instanceID},
 				})
 				if err != nil {
-					content = "server couldn't be stoped."
+					content = "Server is dead."
 				} else {
-					content = "server stoped."
+					content = fmt.Sprintf("Server's IP: %#v", result.Reservations[0].Instances[0].PublicIpAddress)
 				}
-				content = fmt.Sprintf("server test: %#v", result)
 			}
 		}
 
