@@ -239,7 +239,7 @@ func paramCheck(ctx context.Context, event map[string]interface{}) (string, erro
 					TimeoutSeconds: aws.Int32(3600),
 				})
 				if err != nil {
-					content = fmt.Sprintf("command err: %s", err.Error())
+					content = "get status faild."
 				} else {
 					status, err := statusCheck(ctx, ssmClient, output.Command.CommandId, instanceID)
 					if err != nil {
@@ -252,7 +252,7 @@ func paramCheck(ctx context.Context, event map[string]interface{}) (string, erro
 							InstanceId: aws.String(instanceID),
 						})
 						if err != nil {
-							content = fmt.Sprintf("invocation err: %s", err.Error())
+							content = "invocation err"
 						} else {
 							content = *output.StandardOutputContent
 						}
